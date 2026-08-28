@@ -3,6 +3,7 @@ import { Toaster, toast } from "sonner";
 import Header from "./Header";
 import type { Role } from "./RoleSelector";
 import MediAssistant from "./MediAssistant";
+import ProfileEditModal from "./ProfileEditModal";
 import TimelineScreen from "../screens/TimelineScreen";
 import MedicationScreen from "../screens/MedicationScreen";
 import CaregiverScreen from "../screens/CaregiverScreen";
@@ -32,6 +33,7 @@ export default function MediCareApp() {
   const [tab, setTab] = useState("home");
   const [patient, setPatient] = useState<Patient>(initialPatient);
   const [pending, setPending] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +50,11 @@ export default function MediCareApp() {
     setTab(tabsByRole[next][0]!.id);
   }
 
+  function handleProfileSave(updates: Partial<Patient>) {
+    setPatient((prev) => ({ ...prev, ...updates }));
+    toast.success("Profile updated");
+  }
+
   async function handleConsentChange(hospital: string, visible: boolean) {
     // Optimistic update, then reconcile with the API boundary.
     setPatient((prev) => ({
@@ -57,13 +64,13 @@ export default function MediCareApp() {
     toast.success(visible ? "Doctor access enabled" : "Record is now private");
     setPending(true);
     const updated = await updateConsent(PATIENT_ID, hospital, visible);
-    setPatient(updated);
+    setPatient((prev) => ({ ...prev, ...updated }));
     setPending(false);
   }
 
   async function handleAddMedication(drug: string) {
     const result = await addMedication(PATIENT_ID, drug);
-    setPatient(result.patient);
+    setPatient((prev) => ({ ...prev, ...result.patient }));
     if (result.status === "added") toast.success(`${result.drug} added to medications`);
     if (result.status === "interaction") toast.error("Potential medication interaction found");
     if (result.status === "hidden-record") toast("Private record may be relevant");
@@ -73,12 +80,20 @@ export default function MediCareApp() {
   async function handleMissedDose() {
     setPending(true);
     const updated = await markMissedDose(PATIENT_ID);
-    setPatient(updated);
+    setPatient((prev) => ({ ...prev, ...updated }));
     setPending(false);
     toast("Dose marked as missed");
   }
 
   const tabs = tabsByRole[role];
+
+  // Derive initials from current (possibly edited) patient name
+  const initials = patient.name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -88,6 +103,8 @@ export default function MediCareApp() {
         tabs={tabs}
         activeTab={tab}
         onTabChange={setTab}
+        initials={initials}
+        onAvatarClick={() => setProfileOpen(true)}
       />
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -158,6 +175,14 @@ export default function MediCareApp() {
 
       {role === "PATIENT" && (
         <MediAssistant patientName={patient.name} onToast={(message) => toast(message)} />
+      )}
+
+      {profileOpen && (
+        <ProfileEditModal
+          patient={patient}
+          onSave={handleProfileSave}
+          onClose={() => setProfileOpen(false)}
+        />
       )}
 
       <Toaster position="top-center" richColors closeButton />

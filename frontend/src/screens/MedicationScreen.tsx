@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { ShieldPlus } from "lucide-react";
+import { ShieldPlus, ShieldAlert, Sparkles, Check, AlertTriangle, Pill, ArrowRight, Zap } from "lucide-react";
 import PatientSummaryCard from "../components/PatientSummaryCard";
 import MedicationCard from "../components/MedicationCard";
 import AlertBanner from "../components/AlertBanner";
@@ -13,147 +13,232 @@ export default function MedicationScreen({
   onRequestConsent,
 }: {
   patient: Patient;
-  readOnly: boolean;
   onAddMedication?: ((drug: string) => Promise<AddMedicationResult | null>) | undefined;
   onRequestConsent?: ((hospital: string) => void) | undefined;
+  readOnly: boolean;
 }) {
   const [value, setValue] = useState("");
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<AddMedicationResult | null>(null);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!value.trim() || !onAddMedication) return;
+  async function handleAdd(drugName: string) {
+    const trimmed = drugName.trim();
+    if (!trimmed || !onAddMedication) return;
+    setValue(trimmed);
     setChecking(true);
     setResult(null);
-    const outcome = await onAddMedication(value.trim());
+    const outcome = await onAddMedication(trimmed);
     setResult(outcome);
     setChecking(false);
     if (outcome?.status === "added") setValue("");
   }
 
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!value.trim()) return;
+    await handleAdd(value);
+  }
+
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
-          {readOnly ? "Medications" : "Medication Safety"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {readOnly
-            ? "Current medicines for Ananya, view only."
-            : "Review current medications before adding a new prescription."}
-        </p>
-      </header>
-
-      <PatientSummaryCard patient={patient} />
+      {/* Patient Header Summary */}
+      <PatientSummaryCard
+        patient={patient}
+        variant={readOnly ? "hero" : "light"}
+        footnote={
+          readOnly
+            ? `Viewing active medication list for ${patient.name}. Contact clinician before adjusting doses.`
+            : `Prescribing station: Active medication safety engine scanning for interactions and cross-record alerts.`
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Current Medications List */}
         <section className="space-y-3" aria-label="Current medications">
-          <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            Current medications
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Current Active Medications
+            </h2>
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-700">
+              {patient.medications.length} Prescriptions
+            </span>
+          </div>
+
           {patient.medications.length === 0 ? (
-            <p className="surface p-6 text-sm text-muted-foreground">No medications recorded.</p>
+            <div className="surface p-8 text-center text-sm text-muted-foreground">
+              <Pill className="mx-auto h-8 w-8 text-muted-foreground/60" />
+              <p className="mt-2 font-medium">No medications recorded</p>
+            </div>
           ) : (
-            patient.medications.map((med) => <MedicationCard key={med} name={med} />)
+            <div className="space-y-2.5">
+              {patient.medications.map((med) => (
+                <MedicationCard key={med} name={med} />
+              ))}
+            </div>
           )}
         </section>
 
+        {/* Doctor Prescribing Console */}
         {!readOnly && (
           <section className="space-y-4" aria-label="Add medication">
-            <div className="surface p-5">
-              <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
-                <ShieldPlus className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-                Add medication
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                The system checks current medicines and record relevance before the medication is
-                added.
+            <div className="surface relative overflow-hidden p-6 shadow-soft">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-foreground">
+                  <ShieldPlus className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  Prescribe New Medication
+                </h2>
+                <span className="flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-bold text-teal-700 border border-teal-200">
+                  <Zap className="h-2.5 w-2.5" /> Live Safety Scan
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                Enter a medication name. The system checks active drugs and encrypted private records before committing.
               </p>
 
+              {/* Quick simulation buttons */}
+              <div className="mt-4 space-y-1.5">
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  Quick Demo Test Cases:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAdd("Aspirin")}
+                    className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 px-2.5 py-1 text-xs font-semibold text-rose-800 transition-all hover:bg-rose-100 active:scale-95"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                    Test Aspirin (Interaction)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAdd("Metformin")}
+                    className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50/60 px-2.5 py-1 text-xs font-semibold text-amber-900 transition-all hover:bg-amber-100 active:scale-95"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Test Metformin (Private Record)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAdd("Paracetamol")}
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50/60 px-2.5 py-1 text-xs font-semibold text-emerald-900 transition-all hover:bg-emerald-100 active:scale-95"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Test Paracetamol (Safe)
+                  </button>
+                </div>
+              </div>
+
+              {/* Prescription Input Form */}
               <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-                <label htmlFor="medication" className="block text-sm font-medium">
-                  Medication name
-                </label>
-                <input
-                  id="medication"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  placeholder="e.g. Aspirin"
-                  className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-                />
+                <div className="space-y-1">
+                  <label htmlFor="medication" className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                    Medication Name
+                  </label>
+                  <input
+                    id="medication"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="e.g. Aspirin, Metformin, Atorvastatin"
+                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm font-medium outline-none transition-all focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={checking || !value.trim()}
-                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:opacity-95 active:scale-[0.99] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50"
                 >
-                  {checking ? "Checking…" : "Check & Add Medication"}
+                  {checking ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Running Cross-Record Safety Analysis…
+                    </>
+                  ) : (
+                    <>
+                      <ShieldPlus className="h-4 w-4 text-teal-400" />
+                      Run Safety Check & Prescribe
+                    </>
+                  )}
                 </button>
               </form>
             </div>
 
+            {/* Interaction Alert Banner */}
             {result?.status === "interaction" && (
               <AlertBanner
                 tone="danger"
-                severity="High"
-                title="Potential medication interaction"
+                severity="High Clinical Risk"
+                title="Critical Drug-to-Drug Interaction Detected"
                 footer={
-                  <span className="inline-flex rounded-md border border-danger/40 px-3 py-1.5 text-sm font-medium">
-                    Review before prescribing
-                  </span>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-800">
+                    <ShieldAlert className="h-4 w-4" />
+                    Prescription paused. Clinician review required before administration.
+                  </div>
                 }
               >
-                <p className="font-medium">
-                  {result.drug} + {result.interactionWith}
-                </p>
-                <p>{result.risk}</p>
-                <p>Clinician review recommended.</p>
+                <div className="rounded-xl border border-rose-300/80 bg-white/70 p-3 text-xs space-y-1">
+                  <p className="font-bold text-rose-950">
+                    Conflict: <span className="underline">{result.drug}</span> +{" "}
+                    <span className="underline">{result.interactionWith}</span>
+                  </p>
+                  <p className="text-rose-900">{result.risk}</p>
+                </div>
               </AlertBanner>
             )}
 
+            {/* Hidden Record Alert Banner */}
             {result?.status === "hidden-record" && result.hiddenRecord && (
               <AlertBanner
                 tone="warning"
-                severity="Consent"
-                title="Relevant information may exist in a private record"
+                severity="Consent Required"
+                title="Relevant Diagnosis Found in Encrypted Private Record"
                 footer={
-                  <button
-                    onClick={() => onRequestConsent?.(result.hiddenRecord!.hospital)}
-                    className="rounded-md border border-warning/50 bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:bg-warning-soft"
-                  >
-                    Request patient consent
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onRequestConsent?.(result.hiddenRecord!.hospital)}
+                      className="rounded-xl border border-amber-400 bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:bg-amber-700 active:scale-95"
+                    >
+                      Request Patient Consent for {result.hiddenRecord.hospital}
+                    </button>
+                    <span className="text-[11px] text-amber-900 font-medium">
+                      Notification will be sent to patient's portal
+                    </span>
+                  </div>
                 }
               >
-                <p>
-                  A patient record from {result.hiddenRecord.hospital} contains information
-                  potentially relevant to {result.drug}.
+                <p className="text-xs leading-relaxed text-amber-950">
+                  The safety engine detected an encrypted record from{" "}
+                  <span className="font-bold">{result.hiddenRecord.hospital}</span> with clinical relevance to{" "}
+                  <span className="font-bold">{result.drug}</span>. Details remain private until patient grants access.
                 </p>
-                <p>Request patient consent to review the relevant record.</p>
               </AlertBanner>
             )}
 
+            {/* Success Added Banner */}
             {result?.status === "added" && (
-              <AlertBanner tone="success" title="Medication added">
-                <p>
-                  {result.drug} was added to the current medication list. No potential interaction
-                  was identified in the available records.
+              <AlertBanner
+                tone="success"
+                severity="Cleared"
+                title="Medication Successfully Added"
+              >
+                <p className="text-xs text-emerald-950">
+                  <span className="font-bold">{result.drug}</span> passed all interaction and cross-record safety checks. Added to patient's active prescription list.
                 </p>
               </AlertBanner>
             )}
 
+            {/* Initial Guidance Card */}
             {!result && !checking && (
-              <div className="rounded-xl border border-accent/25 bg-secondary/70 p-5">
-                <p className="text-xs font-semibold tracking-wider text-secondary-foreground uppercase">
-                  Feature 2
+              <div className="rounded-2xl border border-teal-500/20 bg-gradient-to-br from-slate-50 via-teal-50/40 to-indigo-50/40 p-5 shadow-xs">
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-800">
+                  <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+                  Active Prescribing Intelligence
                 </p>
-                <p className="mt-1 text-base font-semibold tracking-tight text-primary">
-                  Your doctor sees safety risks
+                <p className="mt-1 text-sm font-bold tracking-tight text-foreground">
+                  Cross-Hospital Safety Guard
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Try <span className="font-medium">Aspirin</span> for an interaction alert, or{" "}
-                  <span className="font-medium">Metformin</span> for a private-record relevance
-                  alert.
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  Try clicking the test buttons above to demo how doctors are protected from dangerous interactions even when past diagnostic records are kept confidential by the patient.
                 </p>
               </div>
             )}
