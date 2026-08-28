@@ -19,7 +19,8 @@ export default function MediAssistant({
 
   if (dismissed) return null;
 
-  const firstName = patientName.split(" ")[0];
+  const firstName = (patientName || "Patient").split(" ")[0];
+  const safeNextMed = nextMed || { name: "Metformin", dose: "500 mg", time: "8:00 PM" };
 
   if (!open) {
     return (
@@ -74,15 +75,15 @@ export default function MediAssistant({
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-bold text-teal-950">
             <Pill className="h-3.5 w-3.5 text-teal-600" />
-            {nextMed.name}
+            {safeNextMed.name}
           </span>
           <span className="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-teal-800 border border-teal-200">
-            {nextMed.dose}
+            {safeNextMed.dose}
           </span>
         </div>
         <p className="mt-1 flex items-center gap-1 text-[11px] text-teal-900/80">
           <Bell className="h-3 w-3 text-teal-600 shrink-0" />
-          Scheduled for <span className="font-semibold">{nextMed.time}</span> today with water.
+          Scheduled for <span className="font-semibold">{safeNextMed.time}</span> today with water.
         </p>
       </div>
 

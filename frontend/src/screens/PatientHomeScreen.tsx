@@ -22,9 +22,10 @@ export default function PatientHomeScreen({
   onMissedDose?: () => void;
   onResetMissedDoses?: () => void;
 }) {
-  const risk = riskFromMissedDoses(patient.missedDoses);
-  const shared = patient.records.filter((r) => r.visible).length;
-  const firstName = patient.name.split(" ")[0];
+  const risk = riskFromMissedDoses(patient?.missedDoses ?? 0);
+  const shared = (patient?.records ?? []).filter((r) => r.visible).length;
+  const firstName = (patient?.name || "Patient").split(" ")[0];
+  const safeNextMed = nextMed || { name: "Metformin", dose: "500 mg", time: "8:00 PM" };
 
   const [editNextOpen, setEditNextOpen] = useState(false);
 
@@ -144,11 +145,11 @@ export default function PatientHomeScreen({
           </div>
           <div className="mt-3">
             <p className="text-xl font-bold tracking-tight text-foreground">
-              {nextMed.name} <span className="font-mono text-sm font-normal text-muted-foreground">({nextMed.dose})</span>
+              {safeNextMed.name} <span className="font-mono text-sm font-normal text-muted-foreground">({safeNextMed.dose})</span>
             </p>
             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5 text-teal-600" />
-              Scheduled for today at <span className="font-semibold text-foreground">{nextMed.time}</span>
+              Scheduled for today at <span className="font-semibold text-foreground">{safeNextMed.time}</span>
             </p>
           </div>
           <button

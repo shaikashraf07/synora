@@ -1,14 +1,12 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 /*
  * MediCareAI / Synora Design System.
- * UI-UX Pro Max Certified: 
- * Contrast >= 4.5:1, Touch Targets >= 44px, High-Clarity Medical Tokens.
+ * Clean, high-contrast clinical theme tokens.
  */
 
 @theme inline {
