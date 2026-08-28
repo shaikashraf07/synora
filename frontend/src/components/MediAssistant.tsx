@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Sparkles, Check, Clock, X, Pill } from "lucide-react";
+import { Minus, Sparkles, Check, Clock, X, Pill, Bell } from "lucide-react";
 import type { ScheduledMedication } from "./EditNextMedicationModal";
 
 /**
@@ -72,7 +72,7 @@ export default function MediAssistant({
 
       <div className="mt-3 rounded-xl border border-teal-500/20 bg-teal-50/60 p-3">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1 text-xs font-bold text-teal-950">
+          <span className="flex items-center gap-1.5 text-xs font-bold text-teal-950">
             <Pill className="h-3.5 w-3.5 text-teal-600" />
             {nextMed.name}
           </span>
@@ -80,7 +80,8 @@ export default function MediAssistant({
             {nextMed.dose}
           </span>
         </div>
-        <p className="mt-1 text-[11px] text-teal-900/80">
+        <p className="mt-1 flex items-center gap-1 text-[11px] text-teal-900/80">
+          <Bell className="h-3 w-3 text-teal-600 shrink-0" />
           Scheduled for <span className="font-semibold">{nextMed.time}</span> today with water.
         </p>
       </div>
@@ -92,7 +93,7 @@ export default function MediAssistant({
             onToast(`Recorded: ${nextMed.name} taken.`);
             setOpen(false);
           }}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:bg-teal-700 active:scale-95"
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:bg-teal-700 active:scale-95"
         >
           <Check className="h-3.5 w-3.5" /> Taken
         </button>
@@ -102,7 +103,7 @@ export default function MediAssistant({
             onToast("Reminder snoozed for 15 minutes.");
             setOpen(false);
           }}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-slate-50"
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-slate-50 active:scale-95"
         >
           <Clock className="h-3.5 w-3.5 text-muted-foreground" /> Remind Later
         </button>
@@ -112,8 +113,9 @@ export default function MediAssistant({
             onToast("Dose skipped — logged in adherence record.");
             setDismissed(true);
           }}
-          className="grid h-8 w-8 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-slate-100 hover:text-foreground"
+          className="grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-slate-100 hover:text-foreground"
           title="Dismiss reminder"
+          aria-label="Dismiss reminder"
         >
           <X className="h-4 w-4" />
         </button>
