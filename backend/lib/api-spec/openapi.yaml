@@ -1,0 +1,295 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Intelligent patient-centric EHR and medication management API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: patient
+    description: Patient records, consent, medications, and adherence
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /patient/{id}:
+    get:
+      operationId: getPatient
+      tags: [patient]
+      summary: Get a patient record
+      description: Returns patient data, optionally filtered for a role that cannot view hidden records.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Patient identifier
+          schema:
+            type: string
+        - name: role
+          in: query
+          required: false
+          description: Patient view includes all records. Doctor and caregiver views include consented records only.
+          schema:
+            $ref: "#/components/schemas/PatientViewRole"
+      responses:
+        "200":
+          description: Patient record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "404":
+          description: Patient not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /patient/{id}/consent:
+    post:
+      operationId: updatePatientConsent
+      tags: [patient]
+      summary: Update record consent
+      description: Enables or disables doctor and caregiver access to a record identified by hospital.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Patient identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentRequest"
+      responses:
+        "200":
+          description: Consent updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentResponse"
+        "400":
+          description: Invalid consent request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Patient or record not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /patient/{id}/medication:
+    post:
+      operationId: addPatientMedication
+      tags: [patient]
+      summary: Add a medication with safety checks
+      description: Adds a medication and checks current medications plus hidden records against static demo rules.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Patient identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicationRequest"
+      responses:
+        "200":
+          description: Medication added with any applicable safety alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicationResponse"
+        "400":
+          description: Invalid medication request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Patient not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /patient/{id}/missed-dose:
+    post:
+      operationId: markPatientMissedDose
+      tags: [patient]
+      summary: Mark a missed dose
+      description: Increments the patient's missed dose counter and computes its current risk level.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Patient identifier
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated adherence risk
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissedDoseResponse"
+        "404":
+          description: Patient not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    MedicalRecord:
+      type: object
+      properties:
+        hospital:
+          type: string
+        date:
+          type: string
+          format: date
+        diagnosis:
+          type: string
+        visible:
+          type: boolean
+      required:
+        - hospital
+        - date
+        - diagnosis
+        - visible
+    Caregiver:
+      type: object
+      properties:
+        name:
+          type: string
+        relation:
+          type: string
+      required:
+        - name
+        - relation
+    RiskLevel:
+      type: string
+      enum: [Green, Yellow, Red]
+    PatientViewRole:
+      type: string
+      enum: [patient, doctor, caregiver]
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/MedicalRecord"
+        medications:
+          type: array
+          items:
+            type: string
+        missedDoses:
+          type: number
+          minimum: 0
+        caregiver:
+          $ref: "#/components/schemas/Caregiver"
+        riskLevel:
+          description: Computed from missedDoses on every response.
+          allOf:
+            - $ref: "#/components/schemas/RiskLevel"
+      required:
+        - id
+        - name
+        - records
+        - medications
+        - missedDoses
+        - caregiver
+        - riskLevel
+    ConsentRequest:
+      type: object
+      properties:
+        hospital:
+          type: string
+          minLength: 1
+        visible:
+          type: boolean
+      required:
+        - hospital
+        - visible
+    ConsentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+    MedicationRequest:
+      type: object
+      properties:
+        drug:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+        - drug
+    MedicationResponse:
+      type: object
+      properties:
+        added:
+          type: string
+        interactionAlert:
+          type: [string, "null"]
+        hiddenRecordAlert:
+          type: [string, "null"]
+      required:
+        - added
+        - interactionAlert
+        - hiddenRecordAlert
+    MissedDoseResponse:
+      type: object
+      properties:
+        missedDoses:
+          type: number
+          minimum: 0
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+      required:
+        - missedDoses
+        - riskLevel
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
