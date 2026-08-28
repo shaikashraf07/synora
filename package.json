@@ -1,0 +1,11 @@
+{
+  "name": "synora-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "start:backend": "node --enable-source-maps ./backend/api-server/dist/index.mjs"
+  }
+}
