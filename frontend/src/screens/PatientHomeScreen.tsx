@@ -1,18 +1,32 @@
-import { Clock, Eye, HeartPulse, Pill, ArrowRight, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { Clock, Eye, HeartPulse, Pill, ArrowRight, ShieldCheck, Sparkles, AlertCircle, Edit3, Plus, RotateCcw } from "lucide-react";
 import RiskBadge from "../components/RiskBadge";
 import PatientSummaryCard from "../components/PatientSummaryCard";
-import { nextMedication, riskFromMissedDoses, type Patient } from "../data/mockData";
+import EditNextMedicationModal, { type ScheduledMedication } from "../components/EditNextMedicationModal";
+import { riskFromMissedDoses, type Patient } from "../data/mockData";
 
 export default function PatientHomeScreen({
   patient,
+  nextMed,
+  onUpdateNextMed,
   onNavigate,
+  onEditProfile,
+  onMissedDose,
+  onResetMissedDoses,
 }: {
   patient: Patient;
+  nextMed: ScheduledMedication;
+  onUpdateNextMed: (updated: ScheduledMedication) => void;
   onNavigate: (tab: string) => void;
+  onEditProfile?: () => void;
+  onMissedDose?: () => void;
+  onResetMissedDoses?: () => void;
 }) {
   const risk = riskFromMissedDoses(patient.missedDoses);
   const shared = patient.records.filter((r) => r.visible).length;
   const firstName = patient.name.split(" ")[0];
+
+  const [editNextOpen, setEditNextOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -20,6 +34,7 @@ export default function PatientHomeScreen({
       <PatientSummaryCard
         patient={patient}
         variant="hero"
+        onEditProfile={onEditProfile}
         footnote={`${shared} of ${patient.records.length} records currently visible to your healthcare team.`}
       />
 
@@ -60,16 +75,35 @@ export default function PatientHomeScreen({
           </div>
         </div>
 
-        {/* Adherence Card */}
+        {/* Adherence Card with interactive stepper */}
         <div className="surface group relative overflow-hidden p-5 transition-all duration-300 hover:border-teal-500/40 hover:shadow-lift">
           <div className="flex items-center justify-between">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Clock className="h-4 w-4 text-teal-600" aria-hidden="true" />
               Missed Doses (This Week)
             </p>
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-slate-700">
-              Week 34
-            </span>
+            <div className="flex items-center gap-1.5">
+              {onMissedDose && (
+                <button
+                  type="button"
+                  onClick={onMissedDose}
+                  className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors"
+                  title="Simulate missed dose (+1)"
+                >
+                  +1 Missed
+                </button>
+              )}
+              {onResetMissedDoses && patient.missedDoses > 0 && (
+                <button
+                  type="button"
+                  onClick={onResetMissedDoses}
+                  className="rounded-lg bg-slate-100 p-1 text-slate-600 hover:bg-slate-200 transition-colors"
+                  title="Reset missed doses to 0"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-3xl font-extrabold tracking-tight text-foreground font-mono">
@@ -93,24 +127,28 @@ export default function PatientHomeScreen({
           </div>
         </div>
 
-        {/* Next Dose Card */}
+        {/* Next Dose Card with Edit Trigger */}
         <div className="surface group relative overflow-hidden p-5 transition-all duration-300 hover:border-teal-500/40 hover:shadow-lift">
           <div className="flex items-center justify-between">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Pill className="h-4 w-4 text-teal-600" aria-hidden="true" />
               Next Scheduled Dose
             </p>
-            <span className="flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 border border-teal-200">
-              <Sparkles className="h-3 w-3" /> Upcoming
-            </span>
+            <button
+              type="button"
+              onClick={() => setEditNextOpen(true)}
+              className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors"
+            >
+              <Edit3 className="h-3 w-3" /> Edit Schedule
+            </button>
           </div>
           <div className="mt-3">
             <p className="text-xl font-bold tracking-tight text-foreground">
-              {nextMedication.name} <span className="font-mono text-sm font-normal text-muted-foreground">({nextMedication.dose})</span>
+              {nextMed.name} <span className="font-mono text-sm font-normal text-muted-foreground">({nextMed.dose})</span>
             </p>
             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5 text-teal-600" />
-              Scheduled for today at <span className="font-semibold text-foreground">{nextMedication.time}</span>
+              Scheduled for today at <span className="font-semibold text-foreground">{nextMed.time}</span>
             </p>
           </div>
           <button
@@ -118,7 +156,7 @@ export default function PatientHomeScreen({
             onClick={() => onNavigate("medications")}
             className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-800 transition-colors"
           >
-            View all medications <ArrowRight className="h-3 w-3" />
+            View all active prescriptions <ArrowRight className="h-3 w-3" />
           </button>
         </div>
 
@@ -176,6 +214,17 @@ export default function PatientHomeScreen({
           </button>
         </div>
       </div>
+
+      {editNextOpen && (
+        <EditNextMedicationModal
+          current={nextMed}
+          onSave={(upd) => {
+            onUpdateNextMed(upd);
+            setEditNextOpen(false);
+          }}
+          onClose={() => setEditNextOpen(false)}
+        />
+      )}
     </div>
   );
 }

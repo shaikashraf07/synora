@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Minus, Sparkles, Check, Clock, X, Pill } from "lucide-react";
-import { nextMedication } from "../data/mockData";
+import type { ScheduledMedication } from "./EditNextMedicationModal";
 
 /**
  * Medi — friendly clinical companion and medication reminder assistant.
  */
 export default function MediAssistant({
   patientName,
+  nextMed,
   onToast,
 }: {
   patientName: string;
+  nextMed: ScheduledMedication;
   onToast: (message: string) => void;
 }) {
   const [open, setOpen] = useState(true);
@@ -72,14 +74,14 @@ export default function MediAssistant({
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs font-bold text-teal-950">
             <Pill className="h-3.5 w-3.5 text-teal-600" />
-            {nextMedication.name}
+            {nextMed.name}
           </span>
           <span className="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-teal-800 border border-teal-200">
-            {nextMedication.dose}
+            {nextMed.dose}
           </span>
         </div>
         <p className="mt-1 text-[11px] text-teal-900/80">
-          Scheduled for <span className="font-semibold">{nextMedication.time}</span> today with water.
+          Scheduled for <span className="font-semibold">{nextMed.time}</span> today with water.
         </p>
       </div>
 
@@ -87,7 +89,7 @@ export default function MediAssistant({
         <button
           type="button"
           onClick={() => {
-            onToast(`Recorded: ${nextMedication.name} taken.`);
+            onToast(`Recorded: ${nextMed.name} taken.`);
             setOpen(false);
           }}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition-transform hover:bg-teal-700 active:scale-95"

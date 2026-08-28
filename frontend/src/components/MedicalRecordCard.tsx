@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, Lock, Unlock, ShieldCheck, ShieldAlert, FileText, CheckCircle2 } from "lucide-react";
+import { Building2, CalendarDays, Lock, Unlock, ShieldCheck, CheckCircle2, Edit3, Trash2 } from "lucide-react";
 import ConsentToggle from "./ConsentToggle";
 import type { MedicalRecord } from "../data/mockData";
 
@@ -6,11 +6,13 @@ export function MedicalRecordCard({
   record,
   editable,
   onConsentChange,
+  onEdit,
   pending,
 }: {
   record: MedicalRecord;
   editable: boolean;
   onConsentChange?: ((hospital: string, visible: boolean) => void) | undefined;
+  onEdit?: ((record: MedicalRecord) => void) | undefined;
   pending?: boolean | undefined;
 }) {
   return (
@@ -53,23 +55,37 @@ export function MedicalRecordCard({
           </div>
         </div>
 
-        <span
-          className={`hidden sm:inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${
-            record.visible
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-amber-200 bg-amber-50 text-amber-800"
-          }`}
-        >
-          {record.visible ? (
-            <>
-              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Consented
-            </>
-          ) : (
-            <>
-              <Lock className="h-3 w-3 text-amber-600" /> Private
-            </>
+        <div className="flex items-center gap-2">
+          {editable && onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(record)}
+              title="Edit hospital record"
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-slate-50 active:scale-95"
+            >
+              <Edit3 className="h-3 w-3 text-teal-600" />
+              Edit
+            </button>
           )}
-        </span>
+
+          <span
+            className={`hidden sm:inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+              record.visible
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-amber-200 bg-amber-50 text-amber-800"
+            }`}
+          >
+            {record.visible ? (
+              <>
+                <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Consented
+              </>
+            ) : (
+              <>
+                <Lock className="h-3 w-3 text-amber-600" /> Private
+              </>
+            )}
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 border-t border-border/80 pt-3.5">

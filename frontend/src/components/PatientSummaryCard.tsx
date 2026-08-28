@@ -1,4 +1,4 @@
-import { CalendarClock, IdCard, Pill, ShieldCheck, UserCheck } from "lucide-react";
+import { CalendarClock, IdCard, Pill, ShieldCheck, UserCheck, Edit3 } from "lucide-react";
 import RiskBadge from "./RiskBadge";
 import { riskFromMissedDoses, type Patient } from "../data/mockData";
 
@@ -6,10 +6,12 @@ export default function PatientSummaryCard({
   patient,
   variant = "light",
   footnote,
+  onEditProfile,
 }: {
   patient: Patient;
   variant?: "light" | "hero" | undefined;
   footnote?: string | undefined;
+  onEditProfile?: (() => void) | undefined;
 }) {
   const risk = riskFromMissedDoses(patient.missedDoses);
   const hero = variant === "hero";
@@ -36,9 +38,11 @@ export default function PatientSummaryCard({
 
       <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <div
-            aria-hidden="true"
-            className={`relative grid h-14 w-14 shrink-0 place-items-center rounded-2xl font-mono text-base font-bold shadow-md transition-transform hover:scale-105 ${
+          <button
+            type="button"
+            onClick={onEditProfile}
+            title="Click to edit profile"
+            className={`group relative grid h-14 w-14 shrink-0 cursor-pointer place-items-center rounded-2xl font-mono text-base font-bold shadow-md transition-transform hover:scale-105 active:scale-95 ${
               hero
                 ? "bg-gradient-to-tr from-teal-600 to-cyan-500 text-white"
                 : "bg-gradient-to-tr from-slate-800 to-slate-700 text-white"
@@ -48,7 +52,7 @@ export default function PatientSummaryCard({
             <div className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-card bg-emerald-500 text-white">
               <UserCheck className="h-3 w-3" />
             </div>
-          </div>
+          </button>
 
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -65,6 +69,21 @@ export default function PatientSummaryCard({
                 <IdCard className="h-3 w-3" />
                 {patient.id}
               </span>
+
+              {onEditProfile && (
+                <button
+                  type="button"
+                  onClick={onEditProfile}
+                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-semibold transition-colors ${
+                    hero
+                      ? "bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300"
+                  }`}
+                >
+                  <Edit3 className="h-3 w-3" />
+                  Edit Profile
+                </button>
+              )}
             </div>
 
             <p className={`text-xs font-medium ${hero ? "text-slate-300" : "text-muted-foreground"}`}>
@@ -85,7 +104,7 @@ export default function PatientSummaryCard({
           Icon={Pill}
           label="Active Medications"
           value={`${patient.medications.length} Prescriptions`}
-          detail={patient.medications.join(", ")}
+          detail={patient.medications.length > 0 ? patient.medications.join(", ") : "None"}
         />
         <Stat
           hero={hero}
